@@ -6,7 +6,7 @@
 #include <ArduinoJson.h>
 #include <ArduinoOTA.h>
 
-StaticJsonDocument<500> doc;
+StaticJsonDocument<1000> doc;
 StaticJsonDocument<5000> docWeather;
 
 nixiDriver NixiClock(4, 5, 2);
@@ -87,6 +87,9 @@ void setup()
   Serial.println(WiFi.localIP());
 
   NixiClock.bootUp(); //Show Segment from 0 to 9 with 500mil delay
+
+
+
 }
 
 void loop()
@@ -98,6 +101,7 @@ void loop()
   http.begin("http://worldtimeapi.org/api/timezone/Europe/Berlin.json"); //Specify the URL
   int httpCodeTime = http.GET();
 
+
   if (httpCodeTime > 0)
   { //Check for the returning code
 
@@ -106,6 +110,12 @@ void loop()
 
     if (error)
     {
+
+      NixiClock.writeSegment('9' - '0', 1);
+      NixiClock.writeSegment('9' - '0', 2);
+      NixiClock.writeSegment('9' - '0', 3);
+      NixiClock.writeSegment('9' - '0', 4); //If there is an error deserializing the time json file, show '8888'
+
       Serial.print(F("deserializeJson() failed: "));
       Serial.println(error.c_str());
       vTaskDelay(2000); //2sec
@@ -135,6 +145,16 @@ void loop()
   else
   {
     Serial.println("Error on HTTP request Time");
+
+
+    NixiClock.writeSegment('9' - '0', 1);
+    NixiClock.writeSegment('9' - '0', 2);
+    NixiClock.writeSegment('9' - '0', 3);
+    NixiClock.writeSegment('9' - '0', 4); //If there is an error sending the http request, show '9999'
+
+    //Internet connection might be lost. Therefore try and set it up again
+    setup();
+
   }
 
   //Temperature
@@ -182,6 +202,14 @@ void loop()
     else
     {
       Serial.println("Error on HTTP request Date");
+
+      NixiClock.writeSegment('9' - '0', 1);
+      NixiClock.writeSegment('9' - '0', 2);
+      NixiClock.writeSegment('9' - '0', 3);
+      NixiClock.writeSegment('9' - '0', 4); //If there is an error sending the http request, show '9999'
+
+      // internet connection might be lost. Therefore try and set it up again:
+      setup();
     }
   }
   else
